@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import session from "express-session";
 import expressLayouts from "express-ejs-layouts";
-
+import { setUser } from "./middleware/auth.js";
 import authRoutes from "./routes/auth.js";
 import citizenRoutes from "./routes/citizen.js";
 import officerRoutes from "./routes/officer.js";
@@ -34,6 +34,8 @@ app.use(
     cookie: { maxAge: 1000 * 60 * 60 * 8 }, // 8 hours
   })
 );
+
+app.use(setUser);
 
 // Make user + notifications available in all views
 app.use(async (req, res, next) => {

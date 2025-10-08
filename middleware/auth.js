@@ -21,3 +21,8 @@ export function ensureRole(...allowedRoles) {
     next();
   };
 }
+// middleware/setUser.js
+export function setUser(req, res, next) {
+  res.locals.user = req.session.user || null;
+  next();
+}

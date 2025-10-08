@@ -1,0 +1,51 @@
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <h2>User Profile</h2>
+  <form action="/profile/update" method="POST">
+    <div class="mb-3">
+      <label>Full Name</label>
+      <input
+        type="text"
+        class="form-control"
+        name="full_name"
+        value="<%= user.full_name %>"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label>Phone</label>
+      <input
+        type="text"
+        class="form-control"
+        name="phone"
+        value="<%= user.phone %>"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label>Date of Birth</label>
+      <input
+        type="date"
+        class="form-control"
+        name="date_of_birth"
+        value="<%= user.date_of_birth ? user.date_of_birth.toISOString().split('T')[0] : '' %>"
+      />
+    </div>
+
+    <% if(user.department_id) { %>
+    <div class="mb-3">
+      <label>Department</label>
+      <input
+        type="text"
+        class="form-control"
+        value="<%= user.department_name %>"
+        disabled
+      />
+    </div>
+    <% } %>
+
+    <button type="submit" class="btn btn-primary">Update Profile</button>
+  </form>
+</div>

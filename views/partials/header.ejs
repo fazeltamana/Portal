@@ -72,7 +72,21 @@
       <a href="/auth/login">Login</a>
       <a href="/auth/register">Register</a>
     <% } else { %>
-      <a href="/citizen/">Dashboard</a>
+      <% if(user.roles.includes('CITIZEN')) { %>
+        <a href="/citizen">Dashboard</a>
+        <a href="/citizen/apply">Apply for Service</a>
+      <% } %>
+      <% if(user.roles.includes('OFFICER') || user.roles.includes('DEPT_HEAD')) { %>
+        <a href="/officer">Dashboard</a>
+        <a href="/officer/requests">Review Requests</a>
+      <% } %>
+      <% if(user.roles.includes('ADMIN')) { %>
+        <a href="/admin">Admin Dashboard</a>
+        <a href="/admin/users">Manage Users</a>
+        <a href="/admin/departments">Departments & Services</a>
+        <a href="/admin/reports">Reports</a>
+      <% } %>
+      <a href="/profile">Profile</a>
       <a href="/auth/logout">Logout</a>
     <% } %>
   </div>
@@ -89,9 +103,20 @@
               <li class="nav-item"><a class="nav-link" href="/auth/register">Register</a></li>
             <% } else { %>
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"><%= user.name %></a>
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                  <%= user.full_name %>
+                </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="/citizen/">Dashboard</a></li>
+                  <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                  <% if(user.roles.includes('ADMIN')) { %>
+                    <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
+                  <% } %>
+                  <% if(user.roles.includes('OFFICER') || user.roles.includes('DEPT_HEAD')) { %>
+                    <li><a class="dropdown-item" href="/officer">Officer Dashboard</a></li>
+                  <% } %>
+                  <% if(user.roles.includes('CITIZEN')) { %>
+                    <li><a class="dropdown-item" href="/citizen">Citizen Dashboard</a></li>
+                  <% } %>
                   <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
                 </ul>
               </li>
