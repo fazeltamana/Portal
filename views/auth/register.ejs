@@ -6,10 +6,9 @@
       <div class="card shadow-sm p-4">
         <h2 class="mb-4 text-center text-primary">Register</h2>
 
-        <% if (error) { %>
+        <% if (typeof error !== 'undefined' && error) { %>
         <div class="alert alert-danger"><%= error %></div>
-        <% } %>
-        <% if (success) { %>
+        <% } %> <% if (typeof success !== 'undefined' && success) { %>
         <div class="alert alert-success"><%= success %></div>
         <% } %>
 
