@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+  <h2 class="text-primary mb-4">Department Requests</h2>
+
+  <!-- Search Box -->
+  <div class="mb-3">
+    <input type="text" id="requestSearch" class="form-control" placeholder="Search by citizen, service, or status...">
+  </div>
+
+  <!-- Requests Table -->
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead class="table-primary">
+        <tr>
+          <th>ID</th>
+          <th>Citizen</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% requests.forEach(r => { %>
+        <tr>
+          <td><a href="/officer/request/<%= r.id %>" class="text-decoration-none"><%= r.id %></a></td>
+          <td><%= r.citizen_name %></td>
+          <td><%= r.service_name %></td>
+          <td>
+            <% if(r.status === 'Pending') { %>
+              <span class="badge bg-warning text-dark"><%= r.status %></span>
+            <% } else if(r.status === 'Approved') { %>
+              <span class="badge bg-success"><%= r.status %></span>
+            <% } else if(r.status === 'Rejected') { %>
+              <span class="badge bg-danger"><%= r.status %></span>
+            <% } else { %>
+              <span class="badge bg-secondary"><%= r.status %></span>
+            <% } %>
+          </td>
+          <td><%= new Date(r.created_at).toLocaleString() %></td>
+          <td>
+            <a href="/officer/request/<%= r.id %>" class="btn btn-sm btn-primary">Review</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Filter table by citizen name, service, or status
+  document.getElementById('requestSearch').addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('tbody tr').forEach(row => {
+      const citizen = row.cells[1].textContent.toLowerCase();
+      const service = row.cells[2].textContent.toLowerCase();
+      const status = row.cells[3].textContent.toLowerCase();
+      row.style.display = citizen.includes(filter) || service.includes(filter) || status.includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h2 class="card-title text-primary mb-3">Request #<%= request.id %> — <%= request.service_name %></h2>
+      <p><strong>Citizen:</strong> <%= request.citizen_name %></p>
+      <p>
+        <strong>Status:</strong>
+        <% if(request.status === 'Pending') { %>
+          <span class="badge bg-warning text-dark"><%= request.status %></span>
+        <% } else if(request.status === 'Approved') { %>
+          <span class="badge bg-success"><%= request.status %></span>
+        <% } else if(request.status === 'Rejected') { %>
+          <span class="badge bg-danger"><%= request.status %></span>
+        <% } else { %>
+          <span class="badge bg-secondary"><%= request.status %></span>
+        <% } %>
+      </p>
+      <p><strong>Department:</strong> <%= request.dept_name %></p>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Documents</h4>
+      <% if(documents.length === 0) { %>
+        <p class="text-muted">No documents uploaded.</p>
+      <% } else { %>
+        <ul class="list-group">
+          <% documents.forEach(d => { %>
+            <li class="list-group-item"><%= d.filename %></li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="post" action="/officer/request/<%= request.id %>/action" class="d-flex gap-3">
+        <button name="action" value="approve" class="btn btn-success flex-fill">Approve</button>
+        <button name="action" value="reject" class="btn btn-danger flex-fill">Reject</button>
+      </form>
+    </div>
+  </div>
+
+  <a href="/officer/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

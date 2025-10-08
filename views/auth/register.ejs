@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm p-4">
+        <h2 class="mb-4 text-center text-primary">Register</h2>
+
+        <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <form method="post" action="/auth/register">
+          <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="name"
+              name="name"
+              required
+              placeholder="Enter your full name"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              required
+              placeholder="Enter your email address"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              required
+              placeholder="Enter a secure password"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+
+        <p class="text-center mt-3">
+          Already have an account?
+          <a href="/auth/login" class="text-primary">Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

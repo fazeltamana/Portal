@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+  <div class="card shadow-sm p-4">
+    <h2 class="card-title text-primary mb-4">Apply for a Service</h2>
+
+    <form method="post" action="/citizen/apply" enctype="multipart/form-data">
+      
+      <!-- Service Selection -->
+      <div class="mb-3">
+        <label for="serviceSelect" class="form-label">Service</label>
+        <select name="service_id" id="serviceSelect" class="form-select" required>
+          <% services.forEach(s => { %>
+            <option value="<%= s.id %>">
+              <%= s.name %> — <%= s.department_name %> ($<%= s.fee %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Details -->
+      <div class="mb-3">
+        <label for="details" class="form-label">Details</label>
+        <textarea name="details" id="details" class="form-control" rows="3" placeholder="Provide additional information..."></textarea>
+      </div>
+
+      <!-- Document Upload -->
+      <div class="mb-3">
+        <label for="documents" class="form-label">Documents</label>
+        <input type="file" name="documents" id="documents" multiple class="form-control">
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary w-100">Submit Application</button>
+    </form>
+  </div>
+
+  <a href="/citizen/" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>
