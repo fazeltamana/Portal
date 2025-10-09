@@ -3,10 +3,55 @@
 <div class="container mt-5">
   <h2 class="text-primary mb-4">Department Requests</h2>
 
-  <!-- Search Box -->
-  <div class="mb-3">
-    <input type="text" id="requestSearch" class="form-control" placeholder="Search by citizen, service, or status...">
-  </div>
+  <!-- Search & Filter Form -->
+  <form method="get" class="d-flex gap-1 flex-wrap align-items-end mb-3">
+    <!-- Citizen Name -->
+    <div>
+      <label class="form-label"></label>
+      <input type="text" name="name" class="form-control" value="<%= filters.name || '' %>" placeholder="Enter citizen Name">
+    </div>
+
+    <!-- Request ID -->
+    <div>
+      <label class="form-label"></label>
+      <input type="text" name="request_id" class="form-control" value="<%= filters.request_id || '' %>" placeholder="Enter request ID">
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label class="form-label"></label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        <option value="SUBMITTED" <%= filters.status === 'SUBMITTED' ? 'selected' : '' %>>Submitted</option>
+        <option value="UNDER_REVIEW" <%= filters.status === 'UNDER_REVIEW' ? 'selected' : '' %>>Under Review</option>
+        <option value="APPROVED" <%= filters.status === 'APPROVED' ? 'selected' : '' %>>Approved</option>
+        <option value="REJECTED" <%= filters.status === 'REJECTED' ? 'selected' : '' %>>Rejected</option>
+      </select>
+    </div>
+
+    <!-- Service -->
+    <div>
+      <label class="form-label"></label>
+      <select name="service_id" class="form-select">
+        <option value="">All Services</option>
+        <% services.forEach(s => { %>
+          <option value="<%= s.id %>" <%= filters.service_id == s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <!-- Date -->
+    <div>
+      <label class="form-label"></label>
+      <input type="date" name="date" class="form-control" value="<%= filters.date || '' %>">
+    </div>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2 align-items-center">
+      <button type="submit" class="btn btn-primary mt-2">Filter</button>
+      <a href="/officer" class="btn btn-secondary mt-2">Reset</a>
+    </div>
+  </form>
 
   <!-- Requests Table -->
   <div class="table-responsive">
@@ -28,17 +73,19 @@
           <td><%= r.citizen_name %></td>
           <td><%= r.service_name %></td>
           <td>
-            <% if(r.status === 'Pending') { %>
+            <% if(r.status === 'SUBMITTED') { %>
               <span class="badge bg-warning text-dark"><%= r.status %></span>
-            <% } else if(r.status === 'Approved') { %>
+            <% } else if(r.status === 'UNDER_REVIEW') { %>
+              <span class="badge bg-info text-dark"><%= r.status %></span>
+            <% } else if(r.status === 'APPROVED') { %>
               <span class="badge bg-success"><%= r.status %></span>
-            <% } else if(r.status === 'Rejected') { %>
+            <% } else if(r.status === 'REJECTED') { %>
               <span class="badge bg-danger"><%= r.status %></span>
             <% } else { %>
               <span class="badge bg-secondary"><%= r.status %></span>
             <% } %>
           </td>
-          <td><%= new Date(r.created_at).toLocaleString() %></td>
+          <td><%= new Date(r.submitted_at).toLocaleString() %></td>
           <td>
             <a href="/officer/request/<%= r.id %>" class="btn btn-sm btn-primary">Review</a>
           </td>
@@ -48,18 +95,5 @@
     </table>
   </div>
 </div>
-
-<script>
-  // Filter table by citizen name, service, or status
-  document.getElementById('requestSearch').addEventListener('input', function() {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll('tbody tr').forEach(row => {
-      const citizen = row.cells[1].textContent.toLowerCase();
-      const service = row.cells[2].textContent.toLowerCase();
-      const status = row.cells[3].textContent.toLowerCase();
-      row.style.display = citizen.includes(filter) || service.includes(filter) || status.includes(filter) ? '' : 'none';
-    });
-  });
-</script>
 
 <%- include('../partials/footer') %>

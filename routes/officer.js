@@ -4,149 +4,145 @@ import db from "../db.js";
 
 const router = express.Router();
 
-// Officer dashboard -> list requests for officer's department
-router.get(
-  "/",
-  ensureAuthenticated,
-  ensureRole("OFFICER", "DEPT_HEAD"),
-  async (req, res) => {
+// Officer Dashboard - list requests for officer's department
+router.get("/", ensureAuthenticated, ensureRole("OFFICER", "DEPT_HEAD"), async (req, res) => {
+  try {
     const user = req.session.user;
     const deptId = user.department_id;
-    if (!deptId) return res.status(403).send("No department assigned");
 
-    const { name, request_id, status, service_type, date_from, date_to } =
-      req.query;
-    let conds = ["d.id = $1"];
-    let params = [deptId];
-    let idx = params.length;
+    // Get filter params from query string
+    const { name, request_id, status, service_id, date } = req.query;
 
-    if (request_id) {
-      idx++;
-      params.push(request_id);
-      conds.push(`r.id = $${idx}`);
-    }
-    if (status) {
-      idx++;
-      params.push(status.toUpperCase());
-      conds.push(`r.current_status = $${idx}`);
-    }
-    if (service_type) {
-      idx++;
-      params.push(`%${service_type}%`);
-      conds.push(`s.name ILIKE $${idx}`);
-    }
-    if (name) {
-      idx++;
-      params.push(`%${name}%`);
-      conds.push(`u.full_name ILIKE $${idx}`);
-    }
-    if (date_from) {
-      idx++;
-      params.push(date_from);
-      conds.push(`r.submitted_at::date >= $${idx}`);
-    }
-    if (date_to) {
-      idx++;
-      params.push(date_to);
-      conds.push(`r.submitted_at::date <= $${idx}`);
-    }
-
-    const sql = `
-      SELECT r.*, s.name AS service_name, u.full_name AS citizen_name, d.name AS dept_name
+    let query = `
+      SELECT r.id, r.current_status, r.submitted_at, 
+             u.full_name AS citizen_name, s.name AS service_name, d.name AS department_name
       FROM requests r
+      JOIN users u ON r.citizen_id = u.id
       JOIN services s ON r.service_id = s.id
       JOIN departments d ON s.department_id = d.id
-      JOIN users u ON r.citizen_id = u.id
-      WHERE ${conds.join(" AND ")}
-      ORDER BY r.submitted_at DESC
-      LIMIT 200
+      WHERE s.department_id = $1
     `;
+    const params = [deptId];
 
-    const result = await db.query(sql, params);
-    res.render("officer/dashboard", {
-      user: req.session.user,
-      requests: result.rows,
-      query: req.query,
-    });
-  }
-);
-
-// View request details
-router.get(
-  "/request/:id",
-  ensureAuthenticated,
-  ensureRole("OFFICER", "DEPT_HEAD"),
-  async (req, res) => {
-    const rid = req.params.id;
-    const q = await db.query(
-      `SELECT r.*, s.name AS service_name, d.id AS dept_id, d.name AS dept_name,
-              u.full_name AS citizen_name, u.email
-       FROM requests r
-       JOIN services s ON r.service_id = s.id
-       JOIN departments d ON s.department_id = d.id
-       JOIN users u ON r.citizen_id = u.id
-       WHERE r.id = $1`,
-      [rid]
-    );
-    const request = q.rows[0];
-    if (!request) return res.status(404).send("Request not found");
-
-    const docs = (
-      await db.query("SELECT * FROM documents WHERE request_id=$1", [rid])
-    ).rows;
-
-    res.render("officer/request_detail", {
-      user: req.session.user,
-      request,
-      documents: docs,
-    });
-  }
-);
-
-// Approve / Reject request
-router.post(
-  "/request/:id/action",
-  ensureAuthenticated,
-  ensureRole("OFFICER", "DEPT_HEAD"),
-  async (req, res) => {
-    const rid = req.params.id;
-    const { action, comment } = req.body; // action = 'approve' | 'reject'
-    const status = action === "approve" ? "APPROVED" : "REJECTED";
-
-    try {
-      // Update request
-      await db.query(
-        `UPDATE requests 
-         SET current_status=$1, reviewed_by=$2, reviewed_at=NOW(), remarks=$3 
-         WHERE id=$4`,
-        [status, req.session.user.id, comment || null, rid]
-      );
-
-      // Insert into request history
-      await db.query(
-        `INSERT INTO request_history (request_id, from_status, to_status, changed_by, note)
-         VALUES ($1, 'UNDER_REVIEW', $2, $3, $4)`,
-        [rid, status, req.session.user.id, comment || null]
-      );
-
-      // Notify citizen
-      const getUser = await db.query(
-        "SELECT citizen_id FROM requests WHERE id=$1",
-        [rid]
-      );
-      const uid = getUser.rows[0].citizen_id;
-
-      await db.query(
-        "INSERT INTO notifications (user_id, request_id, message) VALUES ($1,$2,$3)",
-        [uid, rid, `Your request #${rid} has been ${status}. ${comment || ""}`]
-      );
-
-      res.redirect("/officer");
-    } catch (err) {
-      console.error("Officer action error:", err);
-      res.status(500).send("Server error");
+    // Name filter
+    if (name) {
+      params.push(`%${name}%`);
+      query += ` AND u.full_name ILIKE $${params.length}`;
     }
+
+    // Request ID filter
+    if (request_id) {
+      params.push(`%${request_id}%`);
+      query += ` AND r.id::text ILIKE $${params.length}`;
+    }
+
+    // Status filter
+    if (status) {
+      params.push(status);
+      query += ` AND r.current_status = $${params.length}`;
+    }
+
+    // Service filter
+    if (service_id) {
+      params.push(service_id);
+      query += ` AND s.id = $${params.length}`;
+    }
+
+    // Date filter (only single date)
+    if (date) {
+      params.push(date);
+      query += ` AND r.submitted_at::date = $${params.length}`;
+    }
+
+    query += ` ORDER BY r.submitted_at DESC`;
+
+    const { rows: requests } = await db.query(query, params);
+
+    // Fetch services for dropdown
+    const { rows: services } = await db.query(`SELECT id, name FROM services WHERE department_id = $1`, [deptId]);
+
+    const formattedRequests = requests.map(r => ({
+      ...r,
+      status: r.current_status.charAt(0).toUpperCase() + r.current_status.slice(1).toLowerCase()
+    }));
+
+    res.render("officer/dashboard", {
+      user,
+      requests: formattedRequests,
+      services,
+      filters: { name, request_id, status, service_id, date }
+    });
+
+  } catch (err) {
+    console.error("Officer dashboard error:", err);
+    res.sendStatus(500);
   }
-);
+});
+
+// Review a single request
+router.get("/request/:id", ensureAuthenticated, ensureRole("OFFICER", "DEPT_HEAD"), async (req, res) => {
+  const requestId = req.params.id;
+  try {
+    const { rows } = await db.query(`
+      SELECT r.id, r.current_status, r.submitted_at,
+             u.full_name AS citizen_name, s.name AS service_name,
+             d.name AS dept_name
+      FROM requests r
+      JOIN users u ON r.citizen_id = u.id
+      JOIN services s ON r.service_id = s.id
+      JOIN departments d ON s.department_id = d.id
+      WHERE r.id = $1
+    `, [requestId]);
+
+    if (rows.length === 0) return res.sendStatus(404);
+    const request = rows[0];
+
+    const { rows: documents } = await db.query(`
+      SELECT file_name AS filename
+      FROM documents
+      WHERE request_id = $1
+    `, [requestId]);
+
+    res.render("officer/review_request", { user: req.session.user, request, documents });
+  } catch (err) {
+    console.error("Officer review error:", err);
+    res.sendStatus(500);
+  }
+});
+
+// Approve or Reject a request
+router.post("/request/:id/action", ensureAuthenticated, ensureRole("OFFICER","DEPT_HEAD"), async (req, res) => {
+  const requestId = req.params.id;
+  const action = req.body.action;
+
+  const statusMap = {
+    approve: "APPROVED",
+    reject: "REJECTED"
+  };
+
+  const status = statusMap[action];
+  if (!status) return res.status(400).send("Invalid action");
+
+  try {
+    await db.query(
+      `UPDATE requests SET current_status = $1, reviewed_by = $2, reviewed_at = NOW(), updated_at = NOW() WHERE id = $3`,
+      [status, req.session.user.id, requestId]
+    );
+
+    const { rows } = await db.query(`SELECT citizen_id FROM requests WHERE id = $1`, [requestId]);
+    const citizenId = rows[0].citizen_id;
+
+    await db.query(
+      `INSERT INTO notifications (user_id, message, created_at, is_read)
+       VALUES ($1, $2, NOW(), false)`,
+      [citizenId, `Your request #${requestId} has been ${status.toLowerCase()}.`]
+    );
+
+    res.redirect("/officer");
+  } catch (err) {
+    console.error("Error updating request status:", err);
+    res.status(500).send("Server error");
+  }
+});
 
 export default router;

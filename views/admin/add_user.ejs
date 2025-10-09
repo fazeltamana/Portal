@@ -1,0 +1,54 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+  <h2 class="text-primary mb-4">Register a New Officer or Department Head</h2>
+
+  <% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="/admin/add-user" class="card p-4 shadow-sm">
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input type="text" name="full_name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Department</label>
+      <select name="department_id" class="form-select" required>
+        <option value="">Select Department</option>
+        <% depts.forEach(d => { %>
+          <option value="<%= d.id %>"><%= d.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-select" required>
+        <option value="">Select Role</option>
+        <option value="OFFICER">Officer</option>
+        <option value="DEPT_HEAD">Department Head</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add User</button>
+  </form>
+
+  <a href="/admin" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+
+<%- include('../partials/footer') %>

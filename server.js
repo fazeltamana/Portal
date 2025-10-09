@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.js";
 import citizenRoutes from "./routes/citizen.js";
 import officerRoutes from "./routes/officer.js";
 import adminRoutes from "./routes/admin.js";
+import profileRoutes from "./routes/profile.js";
 import db from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,7 +69,7 @@ app.use("/auth", authRoutes);
 app.use("/citizen", citizenRoutes);
 app.use("/officer", officerRoutes);
 app.use("/admin", adminRoutes);
-
+app.use("/profile", profileRoutes);
 // home route
 app.get("/", (req, res) => {
   res.redirect("/auth/login");

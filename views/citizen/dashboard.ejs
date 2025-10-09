@@ -2,7 +2,6 @@
 
 <div class="container-fluid">
   <div class="row">
-    <!-- Main Content -->
     <div class="col-md-9 col-lg-10 p-5">
       <!-- Page Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,18 +9,31 @@
         <a href="/citizen/apply" class="btn btn-success px-4 py-2">Apply for Service</a>
       </div>
 
-      <!-- Search & Filter Form -->
-      <form class="row g-3 align-items-center mb-4" method="get" action="/citizen">
-        <div class="col-md-6">
-          <input
-            type="text"
-            name="search"
-            value="<%= search %>"
-            class="form-control"
-            placeholder="Search by service or department..."
-          />
+      <!-- Notifications -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white fw-bold">Notifications</div>
+        <div class="card-body">
+          <% if (notifications.length === 0) { %>
+            <p class="text-muted">No notifications yet.</p>
+          <% } else { %>
+            <ul class="list-group">
+              <% notifications.forEach(n => { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <%= n.message %>
+                  <small class="text-muted"><%= new Date(n.created_at).toLocaleString() %></small>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
         </div>
-        <div class="col-md-3">
+        <form action="/citizen/notifications/read" method="POST" class="p-3">
+          <button type="submit" class="btn btn-sm btn-primary">Mark All Read</button>
+        </form>
+      </div>
+
+      <!-- Search & Filter -->
+      <form class="row g-3 align-items-center justify-content-start mb-4" method="get" action="/citizen">
+        <div class="col-md-9">
           <select name="status" class="form-select">
             <option value="All" <%= status === 'All' ? 'selected' : '' %>>All</option>
             <option value="SUBMITTED" <%= status === 'SUBMITTED' ? 'selected' : '' %>>Submitted</option>
@@ -30,7 +42,7 @@
             <option value="COMPLETED" <%= status === 'COMPLETED' ? 'selected' : '' %>>Completed</option>
           </select>
         </div>
-        <div class="col-md-3 text-md-end">
+        <div class="col-md-3 d-flex justify-content-start justify-content-md-end">
           <button type="submit" class="btn btn-primary px-4 w-100 w-md-auto">Filter</button>
         </div>
       </form>
@@ -56,24 +68,39 @@
               <% } else { %>
                 <% requests.forEach(r => { %>
                   <tr>
-                    <td>
-                      <a href="/citizen/request/<%= r.id %>" class="text-decoration-none text-primary">
-                        <%= r.id %>
-                      </a>
-                    </td>
+                    <td><a href="/citizen/request/<%= r.id %>" class="text-decoration-none text-primary"><%= r.id %></a></td>
                     <td><%= r.service_name %> (<%= r.dept_name %>)</td>
-                    <!-- Status Column -->
-                    <td><%= r.payment_status || r.current_status %></td>
-                    <!-- Fee Column -->
                     <td>
-                      <% if (r.fee_cents) { %>
+                      <% 
+                        const statusText = r.current_status || r.payment_status; 
+                        let badgeClass = 'bg-secondary';
+                        switch(statusText) {
+                          case 'SUBMITTED':
+                          case 'PROCESSING':
+                            badgeClass = 'bg-warning text-dark';
+                            break;
+                          case 'PAID':
+                          case 'COMPLETED':
+                            badgeClass = 'bg-success';
+                            break;
+                          case 'APPROVED':
+                            badgeClass = 'bg-info text-dark';
+                            break;
+                          case 'REJECTED':
+                            badgeClass = 'bg-danger';
+                            break;
+                        }
+                      %>
+                      <span class="badge <%= badgeClass %>"><%= statusText %></span>
+                    </td>
+                    <td>
+                      <% if (r.fee_cents && r.fee_cents > 0) { %>
                         $<%= (r.fee_cents / 100).toFixed(2) %>
                       <% } else { %>
                         -
                       <% } %>
                     </td>
-                    <!-- Date Column -->
-                    <td><%= r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '-' %></td>
+                    <td><%= r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : '-' %></td>
                   </tr>
                 <% }) %>
               <% } %>
